@@ -15,21 +15,23 @@ Instead of providing Zipfile with a path, you provide a blob client of your clou
 ```
 # Import
 from azure.storage.blob import BlobClient
-from cloudzipfile import CloudZipFile
+from cloudzipfile.cloudzipfile import CloudZipFile
 import os, tempfile, uuid
 
 # Define blob client
 BLOB_URL = 'https://cloudzipfileexamples.blob.core.windows.net/test/files.zip'
 blobClient = BlobClient.from_blob_url(BLOB_URL)
 
-blobClient = BlobServiceClient.from_connection_string(conn_str=CONN_STR).get_blob_client(container=CONTAINER, blob=BLOB)
-
-# Extract specific files
+# Define link to zipfile
+# Will download central directory (where to find specific files)
 PATH_OUTPUT = os.path.join(tempfile.gettempdir(), str(uuid.uuid4()))
 FILES_DESIRED = ['file1.txt', 'file3.txt']
 cloudZipFile = CloudZipFile(blobClient)
 
+# Extract specific files
 cloudZipFile.extractall(path=PATH_OUTPUT, members=FILES_DESIRED)
+
+# Verify success: should show file1.txt and file2.txt
 print(f'{PATH_OUTPUT}: {os.listdir(PATH_OUTPUT)}')
 
 ```
