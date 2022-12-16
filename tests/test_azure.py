@@ -17,4 +17,5 @@ def test_extractall(tmpdir):
 
     assert all((file in os.listdir(PATH_OUTPUT) for file in FILES_DESIRED))
 
-#test_extractall('data')
+if __name__ == '__main__':
+    test_extractall('data')
