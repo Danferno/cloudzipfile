@@ -1,11 +1,9 @@
-''' Use cloud-stored zipfiles with full ZipFile functionality, including partial downloads. '''
-___version__ = '0.1'
-
 import io
 import zipfile
-from azure.storage.blob import BlobClient
+from azure.storage.blob import BlobClient as BlobClient_AZURE
+from cloudzipfile.cloudclients.cloudclients import AzureClient
 
-__all__ = ['RemoteIOError', 'RemoteZip']
+__all__ = ['RemoteIOError', 'CloudZipFile']
 INITIAL_BUFFER_SIZE = 64*1024
 
 class RemoteZipError(Exception):
@@ -138,15 +136,18 @@ class RemoteIO(io.IOBase):
             self.buffer = None
 
 
-class RemoteZip(zipfile.ZipFile):
-    def __init__(self, blobClient:BlobClient, initial_buffer_size=INITIAL_BUFFER_SIZE, **kwargs):
+class CloudZipFile(zipfile.ZipFile):
+    def __init__(self, blobClient:BlobClient_AZURE, initial_buffer_size=INITIAL_BUFFER_SIZE, **kwargs):
         ''' Pass a blob client pointing to a zip file on Azure. Then use regular zipfile functions.
         Will only download the required parts rather than the entire zip file.'''
         self.kwargs = kwargs
-        self.blobClient = blobClient
+        if isinstance(blobClient, BlobClient_AZURE):
+            self.blobClient = AzureClient(blobClient)
+        else:
+            raise Exception(f'Client of type {type(blobClient)} not supported.')
 
         rio = RemoteIO(self.fetchZipDataByRange, initial_buffer_size)
-        super(RemoteZip, self).__init__(rio)
+        super(CloudZipFile, self).__init__(rio)
         rio.set_pos2size(self.get_position2size())
 
     def get_position2size(self):
@@ -162,13 +163,13 @@ class RemoteZip(zipfile.ZipFile):
         return position2size
 
     def fetchZipDataByRange(self, data_range, stream=io.BytesIO()):
-        blobClient:BlobClient = self.blobClient
-
         start, end = data_range
         if start < 0:
             # Get file size
-            size = blobClient.get_blob_properties()['size']
+            size = self.blobClient.getSize()
             offset = size + start
+            if offset < 0: 
+                offset = 0      # Should offset always be nonzero? Potential bug source.
         else:
             offset = start
         
@@ -176,7 +177,7 @@ class RemoteZip(zipfile.ZipFile):
         length = end-start+1 if end is not None else None
 
         print(f'Fetching remote data: offset: {offset}, length: {length}')
-        buffer = io.BytesIO(blobClient.download_blob(offset=offset, length=length, max_concurrency=8).content_as_bytes())
+        buffer = self.blobClient.partialDownloadToBuffer(offset=offset, length=length)
         size = buffer.seek(0, 2); buffer.seek(0,0)
 
         return PartialBuffer(buffer, offset, size, stream)

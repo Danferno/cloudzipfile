@@ -29,7 +29,7 @@ PATH_OUTPUT = '***'
 FILES_DESIRED = ['*', '**', '***']
 cloudZipFile = CloudZipFile(blobClient)
 
-specificFiles = cloudZipFile.extractall(path=PATH_OUTPUT, members=FILES_DESIRED)
+cloudZipFile.extractall(path=PATH_OUTPUT, members=FILES_DESIRED)
 ```
 
 ## Future Development

@@ -19,5 +19,5 @@ Source = "https://github.com/Danferno/cloudzipfile"
 
 [project.optional-dependencies]
 dev = [
-    "flit"
+    "flit", "pytest"
 ]
