@@ -1,5 +1,11 @@
 # pytest
-# flit publish --repository testpypi
+# Test from testpypi
+#   flit publish --repository testpypi
+#   testenv/Scripts/activate
+#   pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple cloudzipfile
+#   python -m "G:\Other\Python Packages\cloudzipfile\tests\test_azure.py"
+# If satisfied:
+#   flit publish --repository pypi
 # DEBUG: tmpdir = 'data'
 from cloudzipfile.cloudzipfile import CloudZipFile
 from azure.storage.blob import BlobClient
@@ -19,4 +25,8 @@ def test_extractall(tmpdir):
     assert all((file in os.listdir(PATH_OUTPUT) for file in FILES_DESIRED))
 
 if __name__ == '__main__':
-    test_extractall('tests/temp')
+    import tempfile
+    import uuid
+    dir = os.path.join(tempfile.gettempdir(), str(uuid.uuid4()))
+    test_extractall(dir)
+    print(f'{dir}: {os.listdir(dir)}')

@@ -14,22 +14,24 @@ cloudzipfile is a subclass of Python's standard library [zipfile.Zipfile](https:
 Instead of providing Zipfile with a path, you provide a blob client of your cloud provider, for example:
 ```
 # Import
-from azure.storage.blob import BlobServiceClient
+from azure.storage.blob import BlobClient
 from cloudzipfile import CloudZipFile
+import os, tempfile, uuid
 
 # Define blob client
-CONN_STR = '***'
-CONTAINER = '***'
-BLOB = '***'
+BLOB_URL = 'https://cloudzipfileexamples.blob.core.windows.net/test/files.zip'
+blobClient = BlobClient.from_blob_url(BLOB_URL)
 
 blobClient = BlobServiceClient.from_connection_string(conn_str=CONN_STR).get_blob_client(container=CONTAINER, blob=BLOB)
 
 # Extract specific files
-PATH_OUTPUT = '***'
-FILES_DESIRED = ['*', '**', '***']
+PATH_OUTPUT = os.path.join(tempfile.gettempdir(), str(uuid.uuid4()))
+FILES_DESIRED = ['file1.txt', 'file3.txt']
 cloudZipFile = CloudZipFile(blobClient)
 
 cloudZipFile.extractall(path=PATH_OUTPUT, members=FILES_DESIRED)
+print(f'{PATH_OUTPUT}: {os.listdir(PATH_OUTPUT)}')
+
 ```
 
 ## Future Development
